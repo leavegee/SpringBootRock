@@ -4,6 +4,8 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.util.concurrent.Future;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,6 +20,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.yingu.nativeservice.contractservice.async.AsyncTask;
+import com.yingu.nativeservice.contractservice.config.BlogProperties;
 import com.yingu.nativeservice.contractservice.domain.User;
 import com.yingu.nativeservice.contractservice.web.UserController;
 
@@ -33,10 +37,45 @@ public class ContractServiceApplicationTests {
 	@Autowired
 	private RedisTemplate<String, User> redisTemplate;
 	
+	@Autowired
+	private BlogProperties blogProperties;
+	
+	@Autowired
+	private AsyncTask task;
+	
     @Before 
     public void setUp() throws Exception { 
         mvc = MockMvcBuilders.standaloneSetup(new UserController()).build(); 
     } 
+    
+    @Test
+    public void testAsyncTaskReturnValue() throws Exception {
+    	long start = System.currentTimeMillis();
+    	Future<String> task4 = task.doTaskFour();
+    	Future<String> task5 = task.doTaskFour();
+    	while(true) {
+    		if(task4.isDone() && task5.isDone()) {
+    			// 三个任务都调用完成，退出循环等待
+    			break;
+    		}
+    		Thread.sleep(1000);
+    	}
+    	long end = System.currentTimeMillis();
+    	System.out.println("任务全部完成，总耗时：" + (end - start) + "毫秒");
+    }
+    
+    @Test
+	public void testAsyncTask() throws Exception {
+		task.doTaskOne();
+		task.doTaskTwo();
+		task.doTaskThree();
+	}
+    
+    @Test
+	public void getReadProperties() throws Exception {
+		Assert.assertEquals(blogProperties.getName(), "devDD");
+		//Assert.assertEquals(blogProperties.getTitle(), "Spring Boot教程");
+	}
     
     @Test
 	public void testRedis4Object() throws Exception {

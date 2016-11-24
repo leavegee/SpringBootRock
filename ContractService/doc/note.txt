@@ -1,0 +1,27 @@
+访问swagger接口文档
+http://localhost:8080/swagger-ui.html
+
+测试不同配置的加载
+执行java -jar xxx.jar，可以观察到服务端口被设置为1111，也就是默认的开发环境（dev）
+执行java -jar xxx.jar --spring.profiles.active=test，可以观察到服务端口被设置为2222，也就是测试环境的配置（test）
+执行java -jar xxx.jar --spring.profiles.active=prod，可以观察到服务端口被设置为3333，也就是生产环境的配置（prod）
+
+@Scheduled详解
+在上面的入门例子中，使用了@Scheduled(fixedRate = 5000) 注解来定义每过5秒执行的任务，对于@Scheduled的使用可以总结如下几种方式：
+@Scheduled(fixedRate = 5000) ：上一次开始执行时间点之后5秒再执行
+@Scheduled(fixedDelay = 5000) ：上一次执行完毕时间点之后5秒再执行
+@Scheduled(initialDelay=1000, fixedRate=5000) ：第一次延迟1秒后执行，之后按fixedRate的规则每5秒执行一次
+@Scheduled(cron="*/5 * * * * *") ：通过cron表达式定义规则
+
+日志级别控制
+# 日志文件
+logging.file=
+# 日志路径
+logging.path=
+在Spring Boot中只需要在application.properties中进行配置完成日志记录的级别控制。
+配置格式：logging.level.*=LEVEL
+logging.level：日志级别控制前缀，*为包名或Logger名
+LEVEL：选项TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF
+举例：
+logging.level.com.didispace=DEBUG：com.didispace包下所有class以DEBUG级别输出
+logging.level.root=WARN：root日志以WARN级别输出
