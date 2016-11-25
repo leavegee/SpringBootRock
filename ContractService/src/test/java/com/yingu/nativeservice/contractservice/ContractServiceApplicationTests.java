@@ -1,28 +1,46 @@
 package com.yingu.nativeservice.contractservice;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.File;
+import java.util.Map;
 import java.util.concurrent.Future;
 
+import javax.mail.internet.MimeMessage;
+
+import org.apache.commons.collections.map.HashedMap;
+import org.apache.velocity.app.VelocityEngine;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.ui.velocity.VelocityEngineUtils;
 
 import com.yingu.nativeservice.contractservice.async.AsyncTask;
 import com.yingu.nativeservice.contractservice.config.BlogProperties;
 import com.yingu.nativeservice.contractservice.domain.User;
+import com.yingu.nativeservice.contractservice.mapper.UserMapper;
+import com.yingu.nativeservice.contractservice.mq.Sender;
 import com.yingu.nativeservice.contractservice.web.UserController;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -43,10 +61,103 @@ public class ContractServiceApplicationTests {
 	@Autowired
 	private AsyncTask task;
 	
+	@Autowired
+	private JavaMailSender mailSender;
+	
+	@Autowired
+	private VelocityEngine velocityEngine;
+	
+	@Autowired
+	private UserMapper userMapper;
+	
+	@Autowired
+    private Sender sender;
+	
+	@Test
+    public void helloMQ() throws Exception {
+        sender.send();
+    }
+	
+	/**
+	 * mybatis插入测试
+	 * @throws Exception
+	 */
+	@Test
+	@Rollback
+	public void findByName() throws Exception {
+		userMapper.insert("ZZZ", 20);
+		User u = userMapper.findByName("ZZZ");
+		Assert.assertEquals(20, u.getAge().intValue());
+	}
+	
     @Before 
     public void setUp() throws Exception { 
         mvc = MockMvcBuilders.standaloneSetup(new UserController()).build(); 
     } 
+    
+    /**
+     * 发送模板邮件
+     * @throws Exception
+     */
+    @Test
+    public void sendTemplateMail() throws Exception {
+    	MimeMessage mimeMessage = mailSender.createMimeMessage();
+    	MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+    	helper.setFrom("dyc87112@qq.com");
+    	helper.setTo("dyc87112@qq.com");
+    	helper.setSubject("主题：模板邮件");
+    	Map<String, Object> model = new HashedMap();
+    	model.put("username", "didi");
+    	String text = VelocityEngineUtils.mergeTemplateIntoString(
+    			velocityEngine, "template.vm", "UTF-8", model);
+    	helper.setText(text, true);
+    	mailSender.send(mimeMessage);
+    }
+    
+    /**
+     * 发送嵌入静态资源邮件
+     * @throws Exception
+     */
+    @Test
+    public void sendInlineMail() throws Exception {
+    	MimeMessage mimeMessage = mailSender.createMimeMessage();
+    	MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+    	helper.setFrom("dyc87112@qq.com");
+    	helper.setTo("dyc87112@qq.com");
+    	helper.setSubject("主题：嵌入静态资源");
+    	helper.setText("<html><body><img src=\"cid:weixin\" ></body></html>", true);
+    	FileSystemResource file = new FileSystemResource(new File("weixin.jpg"));
+    	helper.addInline("weixin", file);
+    	mailSender.send(mimeMessage);
+    }
+    
+    /**
+     * 发送附件邮件
+     * @throws Exception
+     */
+    @Test
+    public void sendAttachmentsMail() throws Exception {
+    	MimeMessage mimeMessage = mailSender.createMimeMessage();
+    	MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+    	helper.setFrom("dyc87112@qq.com");
+    	helper.setTo("dyc87112@qq.com");
+    	helper.setSubject("主题：有附件");
+    	helper.setText("有附件的邮件");
+    	FileSystemResource file = new FileSystemResource(new File("weixin.jpg"));
+    	helper.addAttachment("附件-1.jpg", file);
+    	helper.addAttachment("附件-2.jpg", file);
+    	mailSender.send(mimeMessage);
+    }
+    
+    @Test
+	public void sendSimpleMail() throws Exception {
+		SimpleMailMessage message = new SimpleMailMessage();
+		message.setFrom("474451886@qq.com");
+		message.setTo("474451886@qq.com");
+		message.setSubject("主题：简单邮件");
+		message.setText("测试邮件内容");
+		mailSender.send(message);
+	}
     
     @Test
     public void testAsyncTaskReturnValue() throws Exception {
