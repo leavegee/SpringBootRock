@@ -1,11 +1,14 @@
 package com.yingu.nativeservice.contractservice.domain;
 
-public class User {
+import java.io.Serializable;
+
+public class User implements Serializable{
+	
 	private Long id;
+	
 	private String name;
+	
 	private Integer age;
-	
-	
 	
 	public User(String name, Integer age) {
 		super();

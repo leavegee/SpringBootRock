@@ -1,7 +1,5 @@
 package com.yingu.nativeservice.contractservice;
 
-import static org.junit.Assert.*;
-
 import org.junit.Test;
 
 public class TestString {

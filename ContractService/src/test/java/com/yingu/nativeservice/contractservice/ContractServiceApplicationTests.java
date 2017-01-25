@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
+import java.math.BigInteger;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -38,6 +40,7 @@ import org.springframework.ui.velocity.VelocityEngineUtils;
 
 import com.yingu.nativeservice.contractservice.async.AsyncTask;
 import com.yingu.nativeservice.contractservice.config.BlogProperties;
+
 import com.yingu.nativeservice.contractservice.domain.User;
 import com.yingu.nativeservice.contractservice.mapper.UserMapper;
 import com.yingu.nativeservice.contractservice.mq.Sender;
@@ -73,10 +76,24 @@ public class ContractServiceApplicationTests {
 	@Autowired
     private Sender sender;
 	
+	//@Autowired
+	//private LbTContractNoGenRepository contractNoGenRepository;
+	
 	@Test
     public void helloMQ() throws Exception {
         sender.send();
     }
+	
+	@Test
+	@Rollback
+	public void testJpa() throws Exception{
+		/*LbTContractNoGen gen = new LbTContractNoGen();
+		gen.setGenDate(new Date());
+		gen.setOrgId("abc");
+		gen.setSerialNumber(new BigInteger("123"));
+		LbTContractNoGen genSaved = contractNoGenRepository.save(gen);
+		Assert.assertNotNull(genSaved);*/
+	}
 	
 	/**
 	 * mybatis插入测试
@@ -85,9 +102,9 @@ public class ContractServiceApplicationTests {
 	@Test
 	@Rollback
 	public void findByName() throws Exception {
-		userMapper.insert("ZZZ", 20);
-		User u = userMapper.findByName("ZZZ");
-		Assert.assertEquals(20, u.getAge().intValue());
+		//userMapper.insert("ZZZ", 20);
+		//User u = userMapper.findByName("ZZZ");
+		//Assert.assertEquals(20, u.getAge().intValue());
 	}
 	
     @Before 

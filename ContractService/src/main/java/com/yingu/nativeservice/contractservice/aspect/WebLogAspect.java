@@ -2,9 +2,7 @@ package com.yingu.nativeservice.contractservice.aspect;
 
 import java.util.Arrays;
 
-
 import javax.servlet.http.HttpServletRequest;
-
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
